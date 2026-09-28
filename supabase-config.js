@@ -1,0 +1,2 @@
+window.FLUSSO_SUPABASE_URL = "https://bfkkzrcvfeoaphehkgab.supabase.co";
+window.FLUSSO_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma2t6cmN2ZmVvYXBoZWhrZ2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODY2NjYsImV4cCI6MjEwNjE2MjY2Nn0.gp4SAne5EXeK4RV3EjxZDlHO4eqzmPhbDB0Tl-Przqk";

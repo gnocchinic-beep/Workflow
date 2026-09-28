@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>
+/* ============ CONFIGURAZIONE: modifica SOLO queste due righe ============ */
+window.FLUSSO_URL = "https://bfkkzrcvfeoaphehkgab.supabase.co";
+window.FLUSSO_KEY = "INCOLLA_QUI_LA_CHIAVE_ANON";
+/* ========================================================================= */
+</script>
+<title>Flusso &#8212; Lavori in corso</title>
+<style>
+:root {
+  --paper: #faf9f6;
+  --ink: #1b1b1f;
+  --ink-soft: #5a5a63;
+  --line: #dedcd4;
+  --teal: #2f6f6b;
+  --teal-dark: #204d4a;
+  --amber: #c98a3e;
+  --card-bg: #ffffff;
+  --danger: #b3452f;
+  --sidebar-bg: #efece4;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1 {
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+/* LOGIN */
+.login-screen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 320px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 2rem 1.75rem;
+}
+.login-card h1 { font-size: 1.4rem; margin-bottom: 0.15rem; }
+.login-sub { color: var(--ink-soft); font-size: 0.85rem; margin: 0 0 1.4rem; }
+.login-card label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.9rem;
+}
+.login-card input {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+.login-card button {
+  width: 100%;
+  background: var(--teal);
+  color: #fff;
+  padding: 0.6rem;
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+.login-card button:hover { background: var(--teal-dark); }
+.login-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  margin-top: 0.8rem;
+}
+
+/* APP SHELL */
+.app { height: 100%; display: flex; }
+
+/* SIDEBAR: elenco bacheche (sedi di lavoro) */
+.sidebar {
+  flex: 0 0 220px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.85rem;
+}
+.sidebar h1 { margin-bottom: 1.1rem; padding-left: 0.3rem; }
+
+.board-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.board-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.board-item:hover { background: #e3e0d6; }
+.board-item.active {
+  background: var(--card-bg);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--teal);
+}
+.board-item-name {
+  flex: 1;
+  font-size: 0.87rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.delete-board-btn {
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0 0.3rem;
+  font-size: 0.9rem;
+  visibility: hidden;
+}
+.board-item:hover .delete-board-btn { visibility: visible; }
+.delete-board-btn:hover { color: var(--danger); }
+
+.add-board-btn { margin-top: 0.75rem; width: 100%; }
+.logout-btn { margin-top: 0.4rem; width: 100%; text-align: center; }
+
+/* MAIN COLUMN */
+.main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.board-name-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--ink);
+  min-width: 0;
+  padding: 0.2rem;
+}
+.board-name-input:focus { outline: 1px solid var(--teal); border-radius: 4px; }
+
+.btn-secondary {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.btn-secondary:hover { border-color: var(--teal); color: var(--teal-dark); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+}
+.btn-ghost:hover { color: var(--ink); }
+
+/* BACHECHE (tabs) */
+.board-tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.6rem 1.25rem 0;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.board-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.board-tab:hover { color: var(--ink); }
+.board-tab.active {
+  color: var(--teal-dark);
+  border-bottom-color: var(--teal);
+  font-weight: 600;
+}
+.add-board-tab {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.95rem;
+}
+.add-board-tab:hover { color: var(--teal-dark); }
+
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.board-name-input {
+  flex: 1;
+  max-width: 320px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--ink);
+}
+.board-name-input:focus { outline: 1px solid var(--teal); }
+
+/* BOARD */
+.board {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+
+.column {
+  flex: 0 0 270px;
+  background: #f1efe9;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.column-title {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-weight: 650;
+  font-size: 0.92rem;
+  color: var(--ink);
+  padding: 0.2rem;
+  min-width: 0;
+}
+.column-title:focus { outline: 1px solid var(--teal); border-radius: 4px; }
+.column-header-actions { display: flex; gap: 0.25rem; }
+.add-card-btn, .delete-column-btn {
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+.add-card-btn:hover { color: var(--teal-dark); }
+.delete-column-btn:hover { color: var(--danger); }
+
+.card-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 40px;
+}
+.card-list.drag-over { background: #e7e4da; border-radius: 8px; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.65rem 0.7rem;
+  cursor: grab;
+}
+.card.dragging { opacity: 0.4; }
+
+.card-top { display: flex; align-items: flex-start; gap: 0.3rem; }
+.card-title {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+  min-width: 0;
+}
+.card-title:focus { outline: none; }
+.delete-card-btn {
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 0 0.2rem;
+}
+.delete-card-btn:hover { color: var(--danger); }
+
+.card-desc {
+  width: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-top: 0.15rem;
+  min-height: 2.2em;
+  font-family: inherit;
+}
+.card-desc:focus { outline: none; }
+
+.card-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+}
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.timer-toggle {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--teal-dark);
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.card.timing .timer-toggle {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #fff;
+}
+.card.timing .timer-display { color: var(--amber); font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+  <!-- SCHERMATA DI LOGIN -->
+  <div id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+      <h1>Flusso</h1>
+      <p class="login-sub">Accedi per gestire i tuoi lavori</p>
+      <label>
+        Email
+        <input type="email" id="login-email" required autocomplete="username" />
+      </label>
+      <label>
+        Password
+        <input type="password" id="login-password" required autocomplete="current-password" />
+      </label>
+      <button type="submit">Entra</button>
+      <p id="login-error" class="login-error" hidden></p>
+    </form>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <h1>Flusso</h1>
+      <div class="topbar-actions">
+        <button id="logout-btn" class="btn-ghost">Esci</button>
+      </div>
+    </header>
+
+    <nav id="board-tabs" class="board-tabs">
+      <!-- le linguette delle bacheche vengono generate qui -->
+    </nav>
+
+    <div class="board-toolbar">
+      <input id="board-name-input" class="board-name-input" type="text" placeholder="Nome bacheca (es. Sede Milano)" />
+      <button id="add-column-btn" class="btn-secondary">+ Colonna</button>
+      <button id="delete-board-btn" class="btn-ghost">Elimina bacheca</button>
+    </div>
+
+    <main id="board" class="board"></main>
+  </div>
+
+  <!-- TEMPLATE: colonna -->
+  <template id="column-template">
+    <section class="column">
+      <div class="column-header">
+        <input class="column-title" type="text" />
+        <div class="column-header-actions">
+          <button class="add-card-btn" title="Aggiungi scheda">+</button>
+          <button class="delete-column-btn" title="Elimina colonna">&#215;</button>
+        </div>
+      </div>
+      <div class="card-list"></div>
+    </section>
+  </template>
+
+  <!-- TEMPLATE: scheda -->
+  <template id="card-template">
+    <article class="card" draggable="true">
+      <div class="card-top">
+        <input class="card-title" type="text" placeholder="Titolo lavoro" />
+        <button class="delete-card-btn" title="Elimina">&#215;</button>
+      </div>
+      <textarea class="card-desc" placeholder="Note..."></textarea>
+      <div class="card-timer">
+        <span class="timer-display">00:00:00</span>
+        <button class="timer-toggle">Avvia</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+/* Flusso \u2014 board kanban personale con time-tracking, multi-bacheca
+   La configurazione (URL e chiave) e in cima al file. */
+
+const cfgError = document.getElementById("login-error");
+function showFatal(msg) {
+  cfgError.textContent = msg;
+  cfgError.hidden = false;
+}
+window.addEventListener("error", (e) => showFatal("Errore: " + e.message));
+
+let SB_URL = String(window.FLUSSO_URL || "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
+let SB_KEY = String(window.FLUSSO_KEY || "").trim();
+let sb = null;
+if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(SB_URL)) {
+  showFatal("Configurazione: l'URL Supabase non e' valido (deve essere come https://xxxx.supabase.co).");
+} else if (SB_KEY.length < 60 || SB_KEY.indexOf("eyJ") !== 0) {
+  showFatal("Configurazione: la chiave anon non e' stata incollata correttamente (deve iniziare con eyJ).");
+} else {
+  sb = window.supabase.createClient(SB_URL, SB_KEY);
+}
+
+const loginScreen = document.getElementById("login-screen");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const appEl = document.getElementById("app");
+const boardEl = document.getElementById("board");
+const boardTabsEl = document.getElementById("board-tabs");
+const boardNameInput = document.getElementById("board-name-input");
+const addColumnBtn = document.getElementById("add-column-btn");
+const deleteBoardBtn = document.getElementById("delete-board-btn");
+const logoutBtn = document.getElementById("logout-btn");
+
+const columnTemplate = document.getElementById("column-template");
+const cardTemplate = document.getElementById("card-template");
+
+let userId = null;
+let boards = [];          // [{id, name, position, data: {columns, tasks}}]
+let activeBoardId = null;
+let dirty = false;
+let saveTimeout = null;
+let tickInterval = null;
+let realtimeChannel = null;
+
+function activeBoard() {
+  return boards.find((b) => b.id === activeBoardId);
+}
+
+// ---------- AUTH ----------
+if (sb) sb.auth.onAuthStateChange((_event, session) => {
+  if (session && session.user) {
+    userId = session.user.id;
+    loginScreen.hidden = true;
+    appEl.hidden = false;
+    loadBoards();
+    startTicking();
+  } else {
+    userId = null;
+    if (realtimeChannel) sb.removeChannel(realtimeChannel);
+    stopTicking();
+    appEl.hidden = true;
+    loginScreen.hidden = false;
+  }
+});
+
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!sb) return;
+  loginError.hidden = true;
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    loginError.textContent = "Accesso non riuscito: " + error.message;
+    loginError.hidden = false;
+  }
+});
+
+logoutBtn.addEventListener("click", () => sb.auth.signOut());
+
+// ---------- CARICAMENTO BACHECHE ----------
+async function loadBoards() {
+  const { data, error } = await sb
+    .from("boards")
+    .select("*")
+    .order("position", { ascending: true });
+
+  if (error) {
+    alert("Errore nel caricamento delle bacheche: " + error.message);
+    return;
+  }
+
+  if (data.length === 0) {
+    const created = await createBoard("Sede principale");
+    boards = [created];
+  } else {
+    boards = data;
+  }
+
+  if (!activeBoardId || !boards.some((b) => b.id === activeBoardId)) {
+    activeBoardId = boards[0].id;
+  }
+
+  renderTabs();
+  renderBoard();
+  subscribeRealtime();
+}
+
+async function createBoard(name) {
+  const { data, error } = await sb
+    .from("boards")
+    .insert({
+      name,
+      position: Date.now(),
+      data: {
+        columns: [
+          { id: uid_(), title: "Da fare" },
+          { id: uid_(), title: "In corso" },
+          { id: uid_(), title: "Fatto" },
+        ],
+        tasks: [],
+      },
+    })
+    .select()
+    .single();
+  if (error) {
+    alert("Errore nella creazione della bacheca: " + error.message);
+    return null;
+  }
+  return data;
+}
+
+function subscribeRealtime() {
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel = sb
+    .channel("boards-sync")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "boards" },
+      (payload) => {
+        if (dirty) return; // evita di sovrascrivere modifiche locali non ancora salvate
+        if (payload.eventType === "DELETE") {
+          boards = boards.filter((b) => b.id !== payload.old.id);
+        } else {
+          const idx = boards.findIndex((b) => b.id === payload.new.id);
+          if (idx === -1) boards.push(payload.new);
+          else boards[idx] = payload.new;
+        }
+        if (!boards.some((b) => b.id === activeBoardId) && boards.length > 0) {
+          activeBoardId = boards[0].id;
+        }
+        renderTabs();
+        renderBoard();
+      }
+    )
+    .subscribe();
+}
+
+// ---------- SALVATAGGIO ----------
+function scheduleSave() {
+  dirty = true;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveNow, 500);
+}
+
+async function saveNow() {
+  clearTimeout(saveTimeout);
+  const board = activeBoard();
+  if (!board) return;
+  const { error } = await sb
+    .from("boards")
+    .update({ name: board.name, data: board.data, updated_at: new Date().toISOString() })
+    .eq("id", board.id);
+  dirty = false;
+  if (error) console.error("Errore nel salvataggio:", error.message);
+}
+
+function uid_() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+// ---------- LINGUETTE BACHECHE ----------
+function renderTabs() {
+  boardTabsEl.innerHTML = "";
+  boards
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .forEach((b) => {
+      const btn = document.createElement("button");
+      btn.className = "board-tab" + (b.id === activeBoardId ? " active" : "");
+      btn.textContent = b.name || "(senza nome)";
+      btn.addEventListener("click", () => {
+        activeBoardId = b.id;
+        renderTabs();
+        renderBoard();
+      });
+      boardTabsEl.appendChild(btn);
+    });
+
+  const addBtn = document.createElement("button");
+  addBtn.className = "add-board-tab";
+  addBtn.textContent = "+ Bacheca";
+  addBtn.title = "Aggiungi una nuova bacheca (es. un'altra sede)";
+  addBtn.addEventListener("click", async () => {
+    const name = prompt("Nome della nuova bacheca (es. Sede Torino):", "Nuova sede");
+    if (!name) return;
+    const created = await createBoard(name);
+    if (created) {
+      boards.push(created);
+      activeBoardId = created.id;
+      renderTabs();
+      renderBoard();
+    }
+  });
+  boardTabsEl.appendChild(addBtn);
+}
+
+deleteBoardBtn.addEventListener("click", async () => {
+  const board = activeBoard();
+  if (!board) return;
+  if (boards.length === 1) {
+    alert("Non puoi eliminare l'unica bacheca rimasta.");
+    return;
+  }
+  if (!confirm(`Eliminare la bacheca "${board.name}" e tutti i suoi lavori?`)) return;
+  const { error } = await sb.from("boards").delete().eq("id", board.id);
+  if (error) {
+    alert("Errore nell'eliminazione: " + error.message);
+    return;
+  }
+  boards = boards.filter((b) => b.id !== board.id);
+  activeBoardId = boards[0].id;
+  renderTabs();
+  renderBoard();
+});
+
+boardNameInput.addEventListener("change", () => {
+  const board = activeBoard();
+  if (!board) return;
+  board.name = boardNameInput.value;
+  scheduleSave();
+  renderTabs();
+});
+
+// ---------- RENDER BACHECA ATTIVA ----------
+function renderBoard() {
+  const board = activeBoard();
+  boardEl.innerHTML = "";
+  if (!board) return;
+  boardNameInput.value = board.name || "";
+  board.data.columns.forEach((col) => boardEl.appendChild(renderColumn(board, col)));
+}
+
+function renderColumn(board, col) {
+  const node = columnTemplate.content.firstElementChild.cloneNode(true);
+  node.dataset.columnId = col.id;
+
+  const titleInput = node.querySelector(".column-title");
+  titleInput.value = col.title;
+  titleInput.addEventListener("change", () => {
+    col.title = titleInput.value;
+    scheduleSave();
+  });
+
+  node.querySelector(".delete-column-btn").addEventListener("click", () => {
+    if (!confirm(`Eliminare la colonna "${col.title}" e le sue schede?`)) return;
+    board.data.tasks = board.data.tasks.filter((t) => t.columnId !== col.id);
+    board.data.columns = board.data.columns.filter((c) => c.id !== col.id);
+    scheduleSave();
+    renderBoard();
+  });
+
+  const list = node.querySelector(".card-list");
+  node.querySelector(".add-card-btn").addEventListener("click", () => {
+    const task = {
+      id: uid_(),
+      title: "",
+      desc: "",
+      columnId: col.id,
+      order: Date.now(),
+      timeSpent: 0,
+      timerStartedAt: null,
+    };
+    board.data.tasks.push(task);
+    scheduleSave();
+    renderBoard();
+  });
+
+  list.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    list.classList.add("drag-over");
+  });
+  list.addEventListener("dragleave", () => list.classList.remove("drag-over"));
+  list.addEventListener("drop", (e) => {
+    e.preventDefault();
+    list.classList.remove("drag-over");
+    const taskId = e.dataTransfer.getData("text/plain");
+    const task = board.data.tasks.find((t) => t.id === taskId);
+    if (task) {
+      task.columnId = col.id;
+      task.order = Date.now();
+      scheduleSave();
+      renderBoard();
+    }
+  });
+
+  board.data.tasks
+    .filter((t) => t.columnId === col.id)
+    .sort((a, b) => a.order - b.order)
+    .forEach((task) => list.appendChild(renderCard(board, task)));
+
+  return node;
+}
+
+function renderCard(board, task) {
+  const node = cardTemplate.content.firstElementChild.cloneNode(true);
+  node.dataset.taskId = task.id;
+  if (task.timerStartedAt) node.classList.add("timing");
+
+  node.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/plain", task.id);
+    node.classList.add("dragging");
+  });
+  node.addEventListener("dragend", () => node.classList.remove("dragging"));
+
+  const titleInput = node.querySelector(".card-title");
+  titleInput.value = task.title;
+  titleInput.addEventListener("change", () => {
+    task.title = titleInput.value;
+    scheduleSave();
+  });
+
+  const descInput = node.querySelector(".card-desc");
+  descInput.value = task.desc;
+  descInput.addEventListener("change", () => {
+    task.desc = descInput.value;
+    scheduleSave();
+  });
+
+  node.querySelector(".delete-card-btn").addEventListener("click", () => {
+    board.data.tasks = board.data.tasks.filter((t) => t.id !== task.id);
+    scheduleSave();
+    renderBoard();
+  });
+
+  const display = node.querySelector(".timer-display");
+  display.textContent = formatDuration(currentElapsed(task));
+
+  node.querySelector(".timer-toggle").addEventListener("click", () => {
+    if (task.timerStartedAt) {
+      task.timeSpent += Date.now() - task.timerStartedAt;
+      task.timerStartedAt = null;
+    } else {
+      // ferma eventuali altri timer in corso, in questa e nelle altre bacheche
+      boards.forEach((b) => {
+        b.data.tasks.forEach((t) => {
+          if (t.timerStartedAt) {
+            t.timeSpent += Date.now() - t.timerStartedAt;
+            t.timerStartedAt = null;
+          }
+        });
+      });
+      task.timerStartedAt = Date.now();
+    }
+    scheduleSave();
+    renderBoard();
+  });
+
+  return node;
+}
+
+function currentElapsed(task) {
+  return task.timeSpent + (task.timerStartedAt ? Date.now() - task.timerStartedAt : 0);
+}
+
+function formatDuration(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  const s = String(totalSec % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
+function startTicking() {
+  tickInterval = setInterval(() => {
+    document.querySelectorAll(".card.timing").forEach((node) => {
+      const board = activeBoard();
+      if (!board) return;
+      const task = board.data.tasks.find((t) => t.id === node.dataset.taskId);
+      if (task) node.querySelector(".timer-display").textContent = formatDuration(currentElapsed(task));
+    });
+  }, 1000);
+}
+function stopTicking() {
+  clearInterval(tickInterval);
+}
+
+// ---------- AGGIUNGI COLONNA ----------
+addColumnBtn.addEventListener("click", () => {
+  const board = activeBoard();
+  if (!board) return;
+  board.data.columns.push({ id: uid_(), title: "Nuova colonna" });
+  scheduleSave();
+  renderBoard();
+});
+
+  </script>
+</body>
+</html>
