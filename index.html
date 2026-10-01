@@ -23,9 +23,9 @@ window.FLUSSO_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
   --danger: #b3452f;
   --sidebar-bg: #efece4;
 }
-
+ 
 * { box-sizing: border-box; }
-
+ 
 html, body {
   margin: 0;
   height: 100%;
@@ -33,14 +33,14 @@ html, body {
   background: var(--paper);
   color: var(--ink);
 }
-
+ 
 h1 {
   font-size: 1.15rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   margin: 0;
 }
-
+ 
 button {
   font-family: inherit;
   cursor: pointer;
@@ -49,8 +49,10 @@ button {
   padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
 }
-
+ 
 /* LOGIN */
+.login-screen[hidden], .app[hidden] { display: none !important; }
+ 
 .login-screen {
   height: 100%;
   display: flex;
@@ -99,10 +101,10 @@ button {
   font-size: 0.78rem;
   margin-top: 0.8rem;
 }
-
+ 
 /* APP SHELL */
 .app { height: 100%; display: flex; }
-
+ 
 /* SIDEBAR: elenco bacheche (sedi di lavoro) */
 .sidebar {
   flex: 0 0 220px;
@@ -113,7 +115,7 @@ button {
   padding: 1rem 0.85rem;
 }
 .sidebar h1 { margin-bottom: 1.1rem; padding-left: 0.3rem; }
-
+ 
 .board-list {
   flex: 1;
   overflow-y: auto;
@@ -153,13 +155,13 @@ button {
 }
 .board-item:hover .delete-board-btn { visibility: visible; }
 .delete-board-btn:hover { color: var(--danger); }
-
+ 
 .add-board-btn { margin-top: 0.75rem; width: 100%; }
 .logout-btn { margin-top: 0.4rem; width: 100%; text-align: center; }
-
+ 
 /* MAIN COLUMN */
 .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
+ 
 .topbar {
   display: flex;
   align-items: center;
@@ -180,20 +182,20 @@ button {
   padding: 0.2rem;
 }
 .board-name-input:focus { outline: 1px solid var(--teal); border-radius: 4px; }
-
+ 
 .btn-secondary {
   background: var(--card-bg);
   border: 1px solid var(--line);
   color: var(--ink);
 }
 .btn-secondary:hover { border-color: var(--teal); color: var(--teal-dark); }
-
+ 
 .btn-ghost {
   background: transparent;
   color: var(--ink-soft);
 }
 .btn-ghost:hover { color: var(--ink); }
-
+ 
 /* BACHECHE (tabs) */
 .board-tabs {
   display: flex;
@@ -226,7 +228,7 @@ button {
   font-size: 0.95rem;
 }
 .add-board-tab:hover { color: var(--teal-dark); }
-
+ 
 .board-toolbar {
   display: flex;
   align-items: center;
@@ -246,7 +248,7 @@ button {
   color: var(--ink);
 }
 .board-name-input:focus { outline: 1px solid var(--teal); }
-
+ 
 /* BOARD */
 .board {
   flex: 1;
@@ -256,7 +258,7 @@ button {
   overflow-x: auto;
   align-items: flex-start;
 }
-
+ 
 .column {
   flex: 0 0 270px;
   background: #f1efe9;
@@ -294,7 +296,7 @@ button {
 }
 .add-card-btn:hover { color: var(--teal-dark); }
 .delete-column-btn:hover { color: var(--danger); }
-
+ 
 .card-list {
   overflow-y: auto;
   display: flex;
@@ -303,7 +305,7 @@ button {
   min-height: 40px;
 }
 .card-list.drag-over { background: #e7e4da; border-radius: 8px; }
-
+ 
 .card {
   background: var(--card-bg);
   border: 1px solid var(--line);
@@ -312,7 +314,7 @@ button {
   cursor: grab;
 }
 .card.dragging { opacity: 0.4; }
-
+ 
 .card-top { display: flex; align-items: flex-start; gap: 0.3rem; }
 .card-title {
   flex: 1;
@@ -331,7 +333,7 @@ button {
   padding: 0 0.2rem;
 }
 .delete-card-btn:hover { color: var(--danger); }
-
+ 
 .card-desc {
   width: 100%;
   border: none;
@@ -344,7 +346,7 @@ button {
   font-family: inherit;
 }
 .card-desc:focus { outline: none; }
-
+ 
 .card-timer {
   display: flex;
   align-items: center;
@@ -372,11 +374,11 @@ button {
   color: #fff;
 }
 .card.timing .timer-display { color: var(--amber); font-weight: 600; }
-
+ 
 </style>
 </head>
 <body>
-
+ 
   <!-- SCHERMATA DI LOGIN -->
   <div id="login-screen" class="login-screen">
     <form id="login-form" class="login-card">
@@ -394,7 +396,7 @@ button {
       <p id="login-error" class="login-error" hidden></p>
     </form>
   </div>
-
+ 
   <!-- APP -->
   <div id="app" class="app" hidden>
     <header class="topbar">
@@ -403,20 +405,20 @@ button {
         <button id="logout-btn" class="btn-ghost">Esci</button>
       </div>
     </header>
-
+ 
     <nav id="board-tabs" class="board-tabs">
       <!-- le linguette delle bacheche vengono generate qui -->
     </nav>
-
+ 
     <div class="board-toolbar">
       <input id="board-name-input" class="board-name-input" type="text" placeholder="Nome bacheca (es. Sede Milano)" />
       <button id="add-column-btn" class="btn-secondary">+ Colonna</button>
       <button id="delete-board-btn" class="btn-ghost">Elimina bacheca</button>
     </div>
-
+ 
     <main id="board" class="board"></main>
   </div>
-
+ 
   <!-- TEMPLATE: colonna -->
   <template id="column-template">
     <section class="column">
@@ -430,7 +432,7 @@ button {
       <div class="card-list"></div>
     </section>
   </template>
-
+ 
   <!-- TEMPLATE: scheda -->
   <template id="card-template">
     <article class="card" draggable="true">
@@ -445,19 +447,19 @@ button {
       </div>
     </article>
   </template>
-
+ 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
 /* Flusso \u2014 board kanban personale con time-tracking, multi-bacheca
    La configurazione (URL e chiave) e in cima al file. */
-
+ 
 const cfgError = document.getElementById("login-error");
 function showFatal(msg) {
   cfgError.textContent = msg;
   cfgError.hidden = false;
 }
 window.addEventListener("error", (e) => showFatal("Errore: " + e.message));
-
+ 
 let SB_URL = String(window.FLUSSO_URL || "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
 let SB_KEY = String(window.FLUSSO_KEY || "").trim();
 let sb = null;
@@ -468,7 +470,7 @@ if (!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(SB_URL)) {
 } else {
   sb = window.supabase.createClient(SB_URL, SB_KEY);
 }
-
+ 
 const loginScreen = document.getElementById("login-screen");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
@@ -479,10 +481,10 @@ const boardNameInput = document.getElementById("board-name-input");
 const addColumnBtn = document.getElementById("add-column-btn");
 const deleteBoardBtn = document.getElementById("delete-board-btn");
 const logoutBtn = document.getElementById("logout-btn");
-
+ 
 const columnTemplate = document.getElementById("column-template");
 const cardTemplate = document.getElementById("card-template");
-
+ 
 let userId = null;
 let boards = [];          // [{id, name, position, data: {columns, tasks}}]
 let activeBoardId = null;
@@ -490,11 +492,11 @@ let dirty = false;
 let saveTimeout = null;
 let tickInterval = null;
 let realtimeChannel = null;
-
+ 
 function activeBoard() {
   return boards.find((b) => b.id === activeBoardId);
 }
-
+ 
 // ---------- AUTH ----------
 if (sb) sb.auth.onAuthStateChange((_event, session) => {
   if (session && session.user) {
@@ -511,8 +513,8 @@ if (sb) sb.auth.onAuthStateChange((_event, session) => {
     loginScreen.hidden = false;
   }
 });
-
-
+ 
+ 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!sb) return;
@@ -525,37 +527,37 @@ loginForm.addEventListener("submit", async (e) => {
     loginError.hidden = false;
   }
 });
-
+ 
 logoutBtn.addEventListener("click", () => sb.auth.signOut());
-
+ 
 // ---------- CARICAMENTO BACHECHE ----------
 async function loadBoards() {
   const { data, error } = await sb
     .from("boards")
     .select("*")
     .order("position", { ascending: true });
-
+ 
   if (error) {
     alert("Errore nel caricamento delle bacheche: " + error.message);
     return;
   }
-
+ 
   if (data.length === 0) {
     const created = await createBoard("Sede principale");
     boards = [created];
   } else {
     boards = data;
   }
-
+ 
   if (!activeBoardId || !boards.some((b) => b.id === activeBoardId)) {
     activeBoardId = boards[0].id;
   }
-
+ 
   renderTabs();
   renderBoard();
   subscribeRealtime();
 }
-
+ 
 async function createBoard(name) {
   const { data, error } = await sb
     .from("boards")
@@ -579,7 +581,7 @@ async function createBoard(name) {
   }
   return data;
 }
-
+ 
 function subscribeRealtime() {
   if (realtimeChannel) sb.removeChannel(realtimeChannel);
   realtimeChannel = sb
@@ -605,14 +607,14 @@ function subscribeRealtime() {
     )
     .subscribe();
 }
-
+ 
 // ---------- SALVATAGGIO ----------
 function scheduleSave() {
   dirty = true;
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(saveNow, 500);
 }
-
+ 
 async function saveNow() {
   clearTimeout(saveTimeout);
   const board = activeBoard();
@@ -624,11 +626,11 @@ async function saveNow() {
   dirty = false;
   if (error) console.error("Errore nel salvataggio:", error.message);
 }
-
+ 
 function uid_() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
-
+ 
 // ---------- LINGUETTE BACHECHE ----------
 function renderTabs() {
   boardTabsEl.innerHTML = "";
@@ -646,7 +648,7 @@ function renderTabs() {
       });
       boardTabsEl.appendChild(btn);
     });
-
+ 
   const addBtn = document.createElement("button");
   addBtn.className = "add-board-tab";
   addBtn.textContent = "+ Bacheca";
@@ -664,7 +666,7 @@ function renderTabs() {
   });
   boardTabsEl.appendChild(addBtn);
 }
-
+ 
 deleteBoardBtn.addEventListener("click", async () => {
   const board = activeBoard();
   if (!board) return;
@@ -683,7 +685,7 @@ deleteBoardBtn.addEventListener("click", async () => {
   renderTabs();
   renderBoard();
 });
-
+ 
 boardNameInput.addEventListener("change", () => {
   const board = activeBoard();
   if (!board) return;
@@ -691,7 +693,7 @@ boardNameInput.addEventListener("change", () => {
   scheduleSave();
   renderTabs();
 });
-
+ 
 // ---------- RENDER BACHECA ATTIVA ----------
 function renderBoard() {
   const board = activeBoard();
@@ -700,18 +702,18 @@ function renderBoard() {
   boardNameInput.value = board.name || "";
   board.data.columns.forEach((col) => boardEl.appendChild(renderColumn(board, col)));
 }
-
+ 
 function renderColumn(board, col) {
   const node = columnTemplate.content.firstElementChild.cloneNode(true);
   node.dataset.columnId = col.id;
-
+ 
   const titleInput = node.querySelector(".column-title");
   titleInput.value = col.title;
   titleInput.addEventListener("change", () => {
     col.title = titleInput.value;
     scheduleSave();
   });
-
+ 
   node.querySelector(".delete-column-btn").addEventListener("click", () => {
     if (!confirm(`Eliminare la colonna "${col.title}" e le sue schede?`)) return;
     board.data.tasks = board.data.tasks.filter((t) => t.columnId !== col.id);
@@ -719,7 +721,7 @@ function renderColumn(board, col) {
     scheduleSave();
     renderBoard();
   });
-
+ 
   const list = node.querySelector(".card-list");
   node.querySelector(".add-card-btn").addEventListener("click", () => {
     const task = {
@@ -735,7 +737,7 @@ function renderColumn(board, col) {
     scheduleSave();
     renderBoard();
   });
-
+ 
   list.addEventListener("dragover", (e) => {
     e.preventDefault();
     list.classList.add("drag-over");
@@ -753,49 +755,49 @@ function renderColumn(board, col) {
       renderBoard();
     }
   });
-
+ 
   board.data.tasks
     .filter((t) => t.columnId === col.id)
     .sort((a, b) => a.order - b.order)
     .forEach((task) => list.appendChild(renderCard(board, task)));
-
+ 
   return node;
 }
-
+ 
 function renderCard(board, task) {
   const node = cardTemplate.content.firstElementChild.cloneNode(true);
   node.dataset.taskId = task.id;
   if (task.timerStartedAt) node.classList.add("timing");
-
+ 
   node.addEventListener("dragstart", (e) => {
     e.dataTransfer.setData("text/plain", task.id);
     node.classList.add("dragging");
   });
   node.addEventListener("dragend", () => node.classList.remove("dragging"));
-
+ 
   const titleInput = node.querySelector(".card-title");
   titleInput.value = task.title;
   titleInput.addEventListener("change", () => {
     task.title = titleInput.value;
     scheduleSave();
   });
-
+ 
   const descInput = node.querySelector(".card-desc");
   descInput.value = task.desc;
   descInput.addEventListener("change", () => {
     task.desc = descInput.value;
     scheduleSave();
   });
-
+ 
   node.querySelector(".delete-card-btn").addEventListener("click", () => {
     board.data.tasks = board.data.tasks.filter((t) => t.id !== task.id);
     scheduleSave();
     renderBoard();
   });
-
+ 
   const display = node.querySelector(".timer-display");
   display.textContent = formatDuration(currentElapsed(task));
-
+ 
   node.querySelector(".timer-toggle").addEventListener("click", () => {
     if (task.timerStartedAt) {
       task.timeSpent += Date.now() - task.timerStartedAt;
@@ -815,14 +817,14 @@ function renderCard(board, task) {
     scheduleSave();
     renderBoard();
   });
-
+ 
   return node;
 }
-
+ 
 function currentElapsed(task) {
   return task.timeSpent + (task.timerStartedAt ? Date.now() - task.timerStartedAt : 0);
 }
-
+ 
 function formatDuration(ms) {
   const totalSec = Math.floor(ms / 1000);
   const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
@@ -830,7 +832,7 @@ function formatDuration(ms) {
   const s = String(totalSec % 60).padStart(2, "0");
   return `${h}:${m}:${s}`;
 }
-
+ 
 function startTicking() {
   tickInterval = setInterval(() => {
     document.querySelectorAll(".card.timing").forEach((node) => {
@@ -844,7 +846,7 @@ function startTicking() {
 function stopTicking() {
   clearInterval(tickInterval);
 }
-
+ 
 // ---------- AGGIUNGI COLONNA ----------
 addColumnBtn.addEventListener("click", () => {
   const board = activeBoard();
@@ -853,7 +855,7 @@ addColumnBtn.addEventListener("click", () => {
   scheduleSave();
   renderBoard();
 });
-
+ 
   </script>
 </body>
 </html>
