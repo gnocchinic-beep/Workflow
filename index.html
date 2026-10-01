@@ -8,6 +8,12 @@
 window.FLUSSO_URL = "https://bfkkzrcvfeoaphehkgab.supabase.co";
 window.FLUSSO_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJma2t6cmN2ZmVvYXBoZWhrZ2FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODY2NjYsImV4cCI6MjEwNjE2MjY2Nn0.gp4SAne5EXeK4RV3EjxZDlHO4eqzmPhbDB0Tl-Przqk";
 /* ========================================================================= */
+(function () {
+  var saved = parseInt(localStorage.getItem("flusso-font-px"), 10);
+  var valid = [15, 18, 21, 24];
+  if (!valid.includes(saved)) saved = 18;
+  document.documentElement.style.fontSize = saved + "px";
+})();
 </script>
 <title>Flusso</title>
 <style>
@@ -37,8 +43,8 @@ window.FLUSSO_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
   --card-bg: #ffffff;
   --danger: #b3452f;
   --success: #3f8f5f;
-  --folder-top: #4f9fd8;
-  --folder-body: #2f8fce;
+  --folder-top: #c7df7d;
+  --folder-body: #AACF38;
   --urgent-alta: #c94b4b;
   --urgent-media: #d19a3a;
   --urgent-bassa: #4e9a62;
@@ -87,6 +93,8 @@ label { font-family: inherit; }
 .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1.75rem; max-width: 900px; }
 .folder-tile { background: transparent; border: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 0.55rem; position: relative; }
 .folder-icon { width: 100px; height: 76px; position: relative; }
+.folder-icon .progress-badge { top: -6px; right: -6px; width: 30px; height: 30px; }
+.folder-icon .progress-badge .pct-text { font-size: 0.62rem; }
 .folder-icon::before { content: ""; position: absolute; top: 0; left: 6px; width: 46px; height: 16px; background: var(--folder-top); border-radius: 5px 8px 0 0; }
 .folder-icon::after { content: ""; position: absolute; top: 10px; left: 0; width: 100px; height: 66px; background: var(--folder-body); border-radius: 6px; box-shadow: 0 6px 14px rgba(47,143,206,0.25); }
 .folder-label { font-size: 0.9rem; font-weight: 600; text-align: center; max-width: 120px; overflow-wrap: break-word; }
@@ -103,6 +111,15 @@ label { font-family: inherit; }
 .board-toolbar { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1.5rem; border-bottom: 1px solid var(--line); }
 .board-name-input { flex: 1; max-width: 320px; border: 1px solid var(--line); border-radius: 5px; padding: 0.4rem 0.6rem; font-size: 0.95rem; font-weight: 600; background: var(--card-bg); color: var(--ink); }
 .board-name-input:focus { outline: 1px solid var(--teal); }
+.board-deadline-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--ink-soft); }
+.board-deadline-label input[type="date"] {
+  border: 1px solid var(--line); border-radius: 5px; padding: 0.35rem 0.5rem; font-size: 0.88rem;
+  background: var(--card-bg); color: var(--ink); font-family: inherit;
+}
+.modal-field input[type="date"] {
+  width: 100%; border: 1px solid var(--line); border-radius: 5px; padding: 0.4rem 0.5rem;
+  font-size: 0.92rem; background: var(--paper); color: var(--ink); font-family: inherit;
+}
  
 /* ---------- COLONNE ---------- */
 .view-board { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -150,11 +167,13 @@ label { font-family: inherit; }
   content: "\\2713"; position: absolute; inset: 0; border-radius: 50%; background: var(--success);
   color: #fff; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
 }
-.card-timer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.4rem; border-top: 1px dashed var(--line); }
-.timer-display { font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--ink-soft); }
-.timer-toggle { background: var(--paper); border: 1px solid var(--line); color: var(--teal-dark); padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 600; }
-.card.timing .timer-toggle { background: var(--urgent-media); border-color: var(--urgent-media); color: #fff; }
-.card.timing .timer-display { color: var(--urgent-media); font-weight: 600; }
+.timer-display { font-variant-numeric: tabular-nums; font-size: 0.85rem; color: var(--ink-soft); }
+.timer-toggle { background: var(--paper); border: 1px solid var(--line); color: var(--teal-dark); padding: 0.25rem 0.7rem; font-size: 0.82rem; font-weight: 600; }
+.timing-indicator { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: var(--urgent-media); font-weight: 600; margin-left: auto; }
+.timing-indicator::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--urgent-media); }
+.card-deadline { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; padding-top: 0.4rem; border-top: 1px dashed rgba(0,0,0,0.12); color: var(--ink-soft); }
+.card-deadline.deadline-overdue { color: var(--danger); font-weight: 600; }
+.card-deadline.deadline-soon { color: var(--urgent-media); font-weight: 600; }
  
 /* ---------- MODALE SCHEDA ---------- */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(20,20,20,0.45); z-index: 20; }
@@ -210,6 +229,17 @@ label { font-family: inherit; }
 .modal-delete-btn { width: 100%; background: transparent; border: 1px solid var(--line); color: var(--danger); margin-top: 0.4rem; }
 .modal-delete-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
  
+/* ---------- DIMENSIONE TESTO ---------- */
+.textsize-wrap { position: relative; }
+.textsize-popover {
+  position: absolute; top: calc(100% + 6px); right: 0; background: var(--card-bg);
+  border: 1px solid var(--line); border-radius: 7px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  padding: 0.4rem; display: flex; flex-direction: column; gap: 0.2rem; min-width: 150px; z-index: 15;
+}
+.textsize-option { background: transparent; text-align: left; border-radius: 5px; color: var(--ink); padding: 0.45rem 0.6rem; }
+.textsize-option:hover { background: var(--paper); }
+.textsize-option.active { background: var(--teal); color: #fff; font-weight: 600; }
+ 
 /* ---------- PANNELLO LATERALE (categorie / persone) ---------- */
 .panel-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 10; }
 .side-panel { position: fixed; top: 0; right: 0; height: 100%; width: 300px; max-width: 90vw; background: var(--card-bg); border-left: 1px solid var(--line); z-index: 11; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
@@ -247,6 +277,10 @@ label { font-family: inherit; }
     <header class="topbar">
       <button id="back-btn" class="btn-ghost" hidden>&larr; Bacheche</button>
       <h1 id="context-title">Flusso</h1>
+      <div class="textsize-wrap">
+        <button id="textsize-btn" class="btn-secondary" title="Dimensione testo">Aa</button>
+        <div id="textsize-popover" class="textsize-popover" hidden></div>
+      </div>
       <button id="people-btn" class="btn-secondary">Persone</button>
       <button id="categories-btn" class="btn-secondary">Categorie</button>
       <button id="logout-btn" class="btn-ghost">Esci</button>
@@ -259,6 +293,9 @@ label { font-family: inherit; }
     <main id="view-board" class="view-board" hidden>
       <div class="board-toolbar">
         <input id="board-name-input" class="board-name-input" type="text" placeholder="Nome bacheca" />
+        <label class="board-deadline-label">Scadenza
+          <input id="board-deadline-input" type="date" />
+        </label>
         <button id="delete-board-btn" class="btn-ghost">Elimina bacheca</button>
       </div>
       <div id="board-columns" class="board-columns"></div>
@@ -296,6 +333,11 @@ label { font-family: inherit; }
           <option value="alta">Alta</option>
         </select>
       </div>
+    </div>
+ 
+    <div class="modal-field">
+      <label>Scadenza</label>
+      <input id="modal-deadline" type="date" />
     </div>
  
     <div class="modal-field">
@@ -370,6 +412,10 @@ const folderGrid = document.getElementById("folder-grid");
 const boardColumnsEl = document.getElementById("board-columns");
 const boardNameInput = document.getElementById("board-name-input");
 const deleteBoardBtn = document.getElementById("delete-board-btn");
+const textsizeBtn = document.getElementById("textsize-btn");
+const textsizePopover = document.getElementById("textsize-popover");
+const boardDeadlineInput = document.getElementById("board-deadline-input");
+const modalDeadline = document.getElementById("modal-deadline");
 const categoriesBtn = document.getElementById("categories-btn");
 const peopleBtn = document.getElementById("people-btn");
 const panelBackdrop = document.getElementById("panel-backdrop");
@@ -416,12 +462,83 @@ function activeTask() {
   return (board.data.tasks || []).find((t) => t.id === activeTaskId) || null;
 }
 function uid_() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+function buildProgressBadge(pct) {
+  const badge = document.createElement("div");
+  badge.className = "progress-badge" + (pct >= 100 ? " done" : "");
+  const r = 10, c = 2 * Math.PI * r;
+  badge.innerHTML =
+    '<svg viewBox="0 0 26 26">' +
+    '<circle class="track" cx="13" cy="13" r="' + r + '"></circle>' +
+    '<circle class="fill" cx="13" cy="13" r="' + r + '" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c - (c * pct / 100)) + '"></circle>' +
+    '</svg><span class="pct-text">' + pct + '</span>';
+  return badge;
+}
+function boardProgressPct(board) {
+  const tasks = (board.data && board.data.tasks) || [];
+  let done = 0, total = 0;
+  tasks.forEach((t) => {
+    (t.subtasks || []).forEach((s) => { total++; if (s.done) done++; });
+  });
+  if (total === 0) return null;
+  return Math.round((done / total) * 100);
+}
+function deadlineStatus(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(dateStr + "T00:00:00");
+  const diffDays = Math.round((due - today) / 86400000);
+  if (diffDays < 0) return "overdue";
+  if (diffDays <= 3) return "soon";
+  return "ok";
+}
+function formatItDate(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+}
 function initials(name) {
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
+ 
+/* ---------- DIMENSIONE TESTO ---------- */
+const FONT_SIZES = [
+  { px: 15, label: "Piccolo" },
+  { px: 18, label: "Normale" },
+  { px: 21, label: "Grande" },
+  { px: 24, label: "Molto grande" },
+];
+function currentFontPx() {
+  const saved = parseInt(localStorage.getItem("flusso-font-px"), 10);
+  return FONT_SIZES.some((f) => f.px === saved) ? saved : 18;
+}
+function renderTextsizePopover() {
+  const active = currentFontPx();
+  textsizePopover.innerHTML = "";
+  FONT_SIZES.forEach((f) => {
+    const btn = document.createElement("button");
+    btn.className = "textsize-option" + (f.px === active ? " active" : "");
+    btn.textContent = f.label;
+    btn.addEventListener("click", () => {
+      localStorage.setItem("flusso-font-px", f.px);
+      document.documentElement.style.fontSize = f.px + "px";
+      renderTextsizePopover();
+    });
+    textsizePopover.appendChild(btn);
+  });
+}
+textsizeBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const wasHidden = textsizePopover.hidden;
+  textsizePopover.hidden = !wasHidden;
+  if (wasHidden) renderTextsizePopover();
+});
+document.addEventListener("click", (e) => {
+  if (!textsizePopover.hidden && !textsizePopover.contains(e.target) && e.target !== textsizeBtn) {
+    textsizePopover.hidden = true;
+  }
+});
  
 /* ---------- AUTH ---------- */
 if (sb) sb.auth.onAuthStateChange((_event, session) => {
@@ -570,6 +687,8 @@ function renderHome() {
     tile.className = "folder-tile";
     tile.innerHTML = '<span class="folder-icon"></span><span class="folder-label"></span>';
     tile.querySelector(".folder-label").textContent = b.name || "(senza nome)";
+    const pct = boardProgressPct(b);
+    if (pct !== null) tile.querySelector(".folder-icon").appendChild(buildProgressBadge(pct));
     tile.addEventListener("click", () => openBoard(b.id));
  
     const del = document.createElement("button");
@@ -608,6 +727,12 @@ boardNameInput.addEventListener("change", () => {
   board.name = boardNameInput.value;
   scheduleSave();
 });
+boardDeadlineInput.addEventListener("change", () => {
+  const board = activeBoard();
+  if (!board) return;
+  board.data.deadline = boardDeadlineInput.value || null;
+  scheduleSave();
+});
 deleteBoardBtn.addEventListener("click", async () => {
   const board = activeBoard();
   if (!board) return;
@@ -624,6 +749,7 @@ function renderBoardView() {
   if (!board) { goHome(); return; }
   contextTitle.textContent = board.name || "Bacheca";
   boardNameInput.value = board.name || "";
+  boardDeadlineInput.value = board.data.deadline || "";
   boardColumnsEl.innerHTML = "";
   if (!board.data.tasks) board.data.tasks = [];
   COLUMNS.forEach((col) => boardColumnsEl.appendChild(renderColumn(board, col)));
@@ -639,7 +765,7 @@ function renderColumn(board, col) {
     const task = {
       id: uid_(), title: "", desc: "", status: col.id,
       categoryId: categories[0] ? categories[0].id : null,
-      urgency: "media", memberIds: [], subtasks: [],
+      urgency: "media", memberIds: [], subtasks: [], deadline: null,
       order: Date.now(), timeSpent: 0, timerStartedAt: null, createdAt: Date.now(),
     };
     board.data.tasks.push(task);
@@ -691,15 +817,7 @@ function renderCard(board, task) {
   if (subtasks.length > 0) {
     const doneCount = subtasks.filter((s) => s.done).length;
     const pct = Math.round((doneCount / subtasks.length) * 100);
-    const badge = document.createElement("div");
-    badge.className = "progress-badge" + (pct >= 100 ? " done" : "");
-    const r = 10, c = 2 * Math.PI * r;
-    badge.innerHTML =
-      '<svg viewBox="0 0 26 26">' +
-      '<circle class="track" cx="13" cy="13" r="' + r + '"></circle>' +
-      '<circle class="fill" cx="13" cy="13" r="' + r + '" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c - (c * pct / 100)) + '"></circle>' +
-      '</svg><span class="pct-text">' + pct + '</span>';
-    node.appendChild(badge);
+    node.appendChild(buildProgressBadge(pct));
   }
  
   const titleEl = document.createElement("div");
@@ -724,21 +842,22 @@ function renderCard(board, task) {
     av.title = person.name;
     avatarRow.appendChild(av);
   });
+  if (task.timerStartedAt) {
+    const indicator = document.createElement("span");
+    indicator.className = "timing-indicator";
+    indicator.textContent = "in corso";
+    metaRow.appendChild(indicator);
+  }
   metaRow.appendChild(avatarRow);
   node.appendChild(metaRow);
  
-  const timerRow = document.createElement("div");
-  timerRow.className = "card-timer";
-  const display = document.createElement("span");
-  display.className = "timer-display";
-  display.textContent = formatDuration(currentElapsed(task));
-  const toggle = document.createElement("button");
-  toggle.className = "timer-toggle";
-  toggle.textContent = task.timerStartedAt ? "Pausa" : "Avvia";
-  toggle.addEventListener("click", (e) => { e.stopPropagation(); toggleTimer(board, task); });
-  timerRow.appendChild(display);
-  timerRow.appendChild(toggle);
-  node.appendChild(timerRow);
+  if (task.deadline) {
+    const status = deadlineStatus(task.deadline);
+    const row = document.createElement("div");
+    row.className = "card-deadline" + (status === "overdue" ? " deadline-overdue" : status === "soon" ? " deadline-soon" : "");
+    row.textContent = "Entro il " + formatItDate(task.deadline);
+    node.appendChild(row);
+  }
  
   return node;
 }
@@ -802,6 +921,7 @@ function openTaskModal(taskId) {
     modalCategory.appendChild(opt);
   });
   modalUrgency.value = task.urgency || "media";
+  modalDeadline.value = task.deadline || "";
   modalDesc.value = task.desc || "";
  
   renderModalMembers(task);
@@ -831,6 +951,11 @@ modalCategory.addEventListener("change", () => {
 modalUrgency.addEventListener("change", () => {
   const task = activeTask(); if (!task) return;
   task.urgency = modalUrgency.value; scheduleSave();
+});
+modalDeadline.addEventListener("change", () => {
+  const task = activeTask(); if (!task) return;
+  task.deadline = modalDeadline.value || null; scheduleSave();
+  if (view === "board") refreshCardInPlace(task);
 });
 modalDesc.addEventListener("change", () => {
   const task = activeTask(); if (!task) return;
