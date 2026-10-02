@@ -89,6 +89,34 @@ label { font-family: inherit; }
 .btn-secondary:hover { border-color: var(--teal); color: var(--teal-dark); }
 #back-btn { font-weight: 600; }
  
+/* ---------- LE MIE ATTIVITA' ---------- */
+.mytasks-panel { background: var(--card-bg); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.75rem; max-width: 900px; }
+.mytasks-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.6rem; }
+.mytasks-recall-label { font-size: 0.78rem; color: var(--ink-soft); }
+.mytasks-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.mytasks-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.6rem; border-radius: 6px; background: var(--paper); cursor: pointer; }
+.mytasks-item:hover { background: #ecebe4; }
+.mytasks-item .urgency-dot { flex: 0 0 auto; }
+.mytasks-item-title { flex: 1; font-weight: 600; font-size: 0.92rem; }
+.mytasks-item-board { font-size: 0.78rem; color: var(--ink-soft); }
+.mytasks-empty { color: var(--ink-soft); font-size: 0.88rem; }
+ 
+/* ---------- TOAST RECALL ---------- */
+.digest-toast {
+  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 30;
+  background: var(--ink); color: #fff; border-radius: 8px; padding: 0.8rem 1rem;
+  display: flex; align-items: center; gap: 0.8rem; max-width: 90vw; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.digest-toast-text { font-size: 0.9rem; }
+.digest-toast-close { background: transparent; color: rgba(255,255,255,0.8); font-size: 1.1rem; padding: 0 0.3rem; }
+.digest-toast-close:hover { color: #fff; }
+ 
+.settings-digest-time-row { padding: 0 0.2rem 0.5rem; }
+.settings-digest-time-row input[type="time"] {
+  width: 100%; border: 1px solid var(--line); border-radius: 5px; padding: 0.35rem 0.5rem;
+  font-size: 0.85rem; background: var(--paper); color: var(--ink); font-family: inherit;
+}
+ 
 /* ---------- HOME: cartelle ---------- */
 .view-home { flex: 1; overflow-y: auto; padding: 2rem; }
 .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1.75rem; max-width: 900px; }
@@ -319,6 +347,12 @@ label { font-family: inherit; }
           <div class="settings-section-label">Dimensione testo</div>
           <div id="settings-textsize-row" class="settings-textsize-row"></div>
           <div class="settings-divider"></div>
+          <div class="settings-section-label">Recall di metà giornata</div>
+          <div class="settings-digest-time-row">
+            <input id="digest-time-input" type="time" />
+          </div>
+          <button id="notify-permission-btn" class="settings-menu-item">Attiva notifiche del browser</button>
+          <div class="settings-divider"></div>
           <button id="menu-people-btn" class="settings-menu-item">Persone</button>
           <button id="menu-categories-btn" class="settings-menu-item">Categorie</button>
         </div>
@@ -328,6 +362,13 @@ label { font-family: inherit; }
     </header>
  
     <main id="view-home" class="view-home">
+      <div id="mytasks-panel" class="mytasks-panel" hidden>
+        <div class="mytasks-header">
+          <h2>Le mie attività di oggi</h2>
+          <span id="mytasks-recall-label" class="mytasks-recall-label"></span>
+        </div>
+        <div id="mytasks-list" class="mytasks-list"></div>
+      </div>
       <div id="folder-grid" class="folder-grid"></div>
     </main>
  
@@ -341,6 +382,11 @@ label { font-family: inherit; }
       </div>
       <div id="board-columns" class="board-columns"></div>
     </main>
+  </div>
+ 
+  <div id="digest-toast" class="digest-toast" hidden>
+    <div id="digest-toast-text" class="digest-toast-text"></div>
+    <button id="digest-toast-close" class="digest-toast-close">&times;</button>
   </div>
  
   <!-- PANNELLO LATERALE: categorie / persone -->
@@ -462,6 +508,14 @@ const chatBtn = document.getElementById("chat-btn");
 const chatPopover = document.getElementById("chat-popover");
 const boardDeadlineInput = document.getElementById("board-deadline-input");
 const modalDeadline = document.getElementById("modal-deadline");
+const mytasksPanel = document.getElementById("mytasks-panel");
+const mytasksList = document.getElementById("mytasks-list");
+const mytasksRecallLabel = document.getElementById("mytasks-recall-label");
+const digestTimeInput = document.getElementById("digest-time-input");
+const notifyPermissionBtn = document.getElementById("notify-permission-btn");
+const digestToast = document.getElementById("digest-toast");
+const digestToastText = document.getElementById("digest-toast-text");
+const digestToastClose = document.getElementById("digest-toast-close");
 const panelBackdrop = document.getElementById("panel-backdrop");
 const sidePanel = document.getElementById("side-panel");
 const panelTitle = document.getElementById("panel-title");
@@ -498,6 +552,8 @@ let saveTimeout = null;
 let tickInterval = null;
 let realtimeChannel = null;
 let suppressCardClick = false;
+let digest = null; // { digest_time, selection_date, recall_done_date, task_refs }
+let digestInterval = null;
  
 function activeBoard() { return boards.find((b) => b.id === activeBoardId); }
 function activeTask() {
@@ -628,18 +684,29 @@ logoutBtn.addEventListener("click", () => sb.auth.signOut());
  
 /* ---------- CARICAMENTO ---------- */
 async function loadEverything() {
-  const [{ data: boardData, error: boardErr }, { data: catData, error: catErr }, { data: peopleData, error: peopleErr }] = await Promise.all([
+  const [{ data: boardData, error: boardErr }, { data: catData, error: catErr }, { data: peopleData, error: peopleErr }, { data: digestRows, error: digestErr }] = await Promise.all([
     sb.from("boards").select("*").order("position", { ascending: true }),
     sb.from("categories").select("*").order("position", { ascending: true }),
     sb.from("people").select("*").order("position", { ascending: true }),
+    sb.from("daily_digest").select("*"),
   ]);
   if (boardErr) { alert("Errore nel caricamento delle bacheche: " + boardErr.message); return; }
   if (catErr) { alert("Errore nel caricamento delle categorie: " + catErr.message); return; }
   if (peopleErr) { alert("Errore nel caricamento delle persone: " + peopleErr.message); return; }
+  if (digestErr) { alert("Errore nel caricamento delle impostazioni del digest: " + digestErr.message); return; }
  
   boards = boardData;
   categories = catData;
   people = peopleData;
+ 
+  if (digestRows && digestRows.length > 0) {
+    digest = digestRows[0];
+  } else {
+    const { data: createdDigest, error: createDigestErr } = await sb.from("daily_digest")
+      .insert({ digest_time: "14:30", task_refs: [] }).select().single();
+    if (createDigestErr) { alert("Errore nella creazione delle impostazioni del digest: " + createDigestErr.message); return; }
+    digest = createdDigest;
+  }
  
   if (categories.length === 0) {
     for (const c of DEFAULT_CATEGORIES) {
@@ -652,8 +719,13 @@ async function loadEverything() {
     if (created) boards = [created];
   }
  
+  digestTimeInput.value = digest.digest_time || "14:30";
+  await runMorningSelection();
+  await runRecallIfDue();
+ 
   goHome();
   subscribeRealtime();
+  startDigestInterval();
 }
  
 async function createBoard(name) {
@@ -723,6 +795,178 @@ async function saveNow() {
   if (error) console.error("Errore nel salvataggio:", error.message);
 }
  
+/* ---------- DAILY DIGEST: "le mie attivita'" ---------- */
+const DIGEST_TARGET_COUNT = 4;
+ 
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function nowHHMM() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function findTaskAnyBoard(taskId) {
+  for (const b of boards) {
+    const t = (b.data.tasks || []).find((x) => x.id === taskId);
+    if (t) return { board: b, task: t };
+  }
+  return null;
+}
+function scoreTask(task) {
+  let score = 0;
+  score += task.urgency === "alta" ? 30 : task.urgency === "media" ? 20 : 10;
+  if (task.deadline) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const due = new Date(task.deadline + "T00:00:00");
+    const diffDays = Math.round((due - today) / 86400000);
+    if (diffDays < 0) score += 50;
+    else if (diffDays === 0) score += 40;
+    else if (diffDays <= 3) score += 20;
+    else score += 5;
+  }
+  return score;
+}
+function candidatePool(excludeIds) {
+  const pool = [];
+  boards.forEach((b) => {
+    (b.data.tasks || []).forEach((t) => {
+      if ((t.status || "todo") === "done") return;
+      if (excludeIds.includes(t.id)) return;
+      pool.push({ board: b, task: t, score: scoreTask(t) });
+    });
+  });
+  pool.sort((a, b) => b.score - a.score);
+  return pool;
+}
+async function saveDigest() {
+  const { error } = await sb.from("daily_digest")
+    .update({ digest_time: digest.digest_time, selection_date: digest.selection_date, recall_done_date: digest.recall_done_date, task_refs: digest.task_refs, updated_at: new Date().toISOString() })
+    .eq("user_id", digest.user_id);
+  if (error) console.error("Errore nel salvataggio del digest:", error.message);
+}
+async function runMorningSelection() {
+  const today = todayStr();
+  if (digest.selection_date === today) return;
+  const pool = candidatePool([]);
+  const picked = pool.slice(0, DIGEST_TARGET_COUNT);
+  picked.forEach((p) => { p.task.status = "today"; p.task.order = Date.now(); });
+  await Promise.all(Array.from(new Set(picked.map((p) => p.board.id))).map((boardId) => {
+    const b = boards.find((x) => x.id === boardId);
+    return sb.from("boards").update({ data: b.data, updated_at: new Date().toISOString() }).eq("id", b.id);
+  }));
+  digest.selection_date = today;
+  digest.recall_done_date = null;
+  digest.task_refs = picked.map((p) => p.task.id);
+  await saveDigest();
+}
+async function runRecallIfDue() {
+  const today = todayStr();
+  if (digest.recall_done_date === today) return;
+  if (nowHHMM() < (digest.digest_time || "14:30")) return;
+ 
+  const stillActive = [];
+  const progressed = [];
+  (digest.task_refs || []).forEach((id) => {
+    const found = findTaskAnyBoard(id);
+    if (!found || (found.task.status || "todo") !== "today") progressed.push(id);
+    else stillActive.push(id);
+  });
+ 
+  if (progressed.length === 0 && digest.task_refs && digest.task_refs.length > 0) {
+    digest.recall_done_date = today;
+    await saveDigest();
+    return;
+  }
+ 
+  const needed = Math.max(0, DIGEST_TARGET_COUNT - stillActive.length);
+  const pool = candidatePool(stillActive.concat(progressed));
+  const newPicks = pool.slice(0, needed);
+  newPicks.forEach((p) => { p.task.status = "today"; p.task.order = Date.now(); });
+  await Promise.all(Array.from(new Set(newPicks.map((p) => p.board.id))).map((boardId) => {
+    const b = boards.find((x) => x.id === boardId);
+    return sb.from("boards").update({ data: b.data, updated_at: new Date().toISOString() }).eq("id", b.id);
+  }));
+ 
+  digest.task_refs = stillActive.concat(newPicks.map((p) => p.task.id));
+  digest.recall_done_date = today;
+  await saveDigest();
+ 
+  if (progressed.length > 0 || newPicks.length > 0) {
+    const parts = [];
+    if (progressed.length > 0) parts.push(progressed.length + " attività portate avanti");
+    if (newPicks.length > 0) parts.push(newPicks.length + " nuove proposte");
+    showDigestToast("Recall di metà giornata: " + parts.join(", ") + ".");
+    if (window.Notification && Notification.permission === "granted") {
+      new Notification("workFlow — Recall di metà giornata", { body: parts.join(", ") });
+    }
+  }
+  if (view === "home") renderMyTasksPanel();
+  if (view === "board") renderBoardView();
+}
+function startDigestInterval() {
+  clearInterval(digestInterval);
+  digestInterval = setInterval(async () => {
+    await runMorningSelection();
+    await runRecallIfDue();
+  }, 60000);
+}
+ 
+function renderMyTasksPanel() {
+  mytasksRecallLabel.textContent = "Recall alle " + (digest.digest_time || "14:30");
+  mytasksList.innerHTML = "";
+  const refs = digest.task_refs || [];
+  if (refs.length === 0) {
+    mytasksPanel.hidden = boards.every((b) => (b.data.tasks || []).length === 0);
+    if (!mytasksPanel.hidden) {
+      const empty = document.createElement("div");
+      empty.className = "mytasks-empty";
+      empty.textContent = "Nessuna attività proposta per oggi.";
+      mytasksList.appendChild(empty);
+    }
+    return;
+  }
+  mytasksPanel.hidden = false;
+  refs.forEach((id) => {
+    const found = findTaskAnyBoard(id);
+    if (!found) return;
+    const { board, task } = found;
+    const row = document.createElement("div");
+    row.className = "mytasks-item";
+    const dot = document.createElement("span");
+    dot.className = "urgency-dot urgency-" + (task.urgency || "media");
+    const title = document.createElement("span");
+    title.className = "mytasks-item-title";
+    title.textContent = task.title || "Senza titolo";
+    const boardTag = document.createElement("span");
+    boardTag.className = "mytasks-item-board";
+    boardTag.textContent = board.name || "";
+    row.appendChild(dot);
+    row.appendChild(title);
+    row.appendChild(boardTag);
+    row.addEventListener("click", () => { openBoard(board.id); openTaskModal(task.id); });
+    mytasksList.appendChild(row);
+  });
+}
+ 
+function showDigestToast(text) {
+  digestToastText.textContent = text;
+  digestToast.hidden = false;
+}
+digestToastClose.addEventListener("click", () => { digestToast.hidden = true; });
+ 
+digestTimeInput.addEventListener("change", async () => {
+  digest.digest_time = digestTimeInput.value || "14:30";
+  await saveDigest();
+  if (view === "home") renderMyTasksPanel();
+});
+notifyPermissionBtn.addEventListener("click", async () => {
+  if (!window.Notification) { alert("Il browser non supporta le notifiche."); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === "granted") alert("Notifiche attivate. Funzionano finché tieni aperta questa scheda del browser.");
+  else alert("Notifiche non attivate.");
+});
+ 
 /* ---------- NAVIGAZIONE ---------- */
 function goHome() {
   view = "home"; activeBoardId = null;
@@ -730,6 +974,7 @@ function goHome() {
   contextTitle.textContent = "";
   viewHome.hidden = false; viewBoard.hidden = true;
   renderHome();
+  renderMyTasksPanel();
 }
 function openBoard(id) {
   view = "board"; activeBoardId = id;
