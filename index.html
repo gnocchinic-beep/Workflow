@@ -944,6 +944,13 @@ function startDigestInterval() {
   }, 60000);
 }
  
+function removeFromDigestIfPresent(taskId) {
+  if (!digest || !digest.task_refs || !digest.task_refs.includes(taskId)) return;
+  digest.task_refs = digest.task_refs.filter((id) => id !== taskId);
+  saveDigest();
+  if (view === "home") renderMyTasksPanel();
+}
+ 
 function renderMyTasksPanel() {
   mytasksRecallLabel.textContent = "Recall alle " + (digest.digest_time || "14:30");
   mytasksList.innerHTML = "";
@@ -1174,7 +1181,10 @@ function renderColumn(board, col) {
     list.classList.remove("drag-over");
     const taskId = e.dataTransfer.getData("text/plain");
     const task = board.data.tasks.find((t) => t.id === taskId);
-    if (task) { task.status = col.id; task.order = Date.now(); scheduleSave(); renderBoardView(); }
+    if (task) {
+      task.status = col.id; task.order = Date.now(); scheduleSave(); renderBoardView();
+      if (col.id === "done") removeFromDigestIfPresent(task.id);
+    }
   });
  
   board.data.tasks
@@ -1313,6 +1323,7 @@ modalDeleteBtn.addEventListener("click", () => {
   if (!confirm("Eliminare questa scheda?")) return;
   board.data.tasks = board.data.tasks.filter((t) => t.id !== task.id);
   scheduleSave();
+  removeFromDigestIfPresent(task.id);
   closeTaskModal();
 });
 modalCompleted.addEventListener("change", () => {
@@ -1322,6 +1333,7 @@ modalCompleted.addEventListener("change", () => {
   modalColumnLabel.textContent = col ? col.title : "";
   scheduleSave();
   if (view === "board") refreshCardInPlace(task);
+  if (modalCompleted.checked) removeFromDigestIfPresent(task.id);
 });
  
 function renderModalMembers(task) {
